@@ -69,5 +69,9 @@ Before you submit a pull request, check that it meets these guidelines:
 
 ## Code of Conduct
 
+<<<<<<< HEAD
 Please note that the `temperature` project is released with a
+=======
+Please note that the `droplet_temperature_analysis` project is released with a
+>>>>>>> 9cd68b2ee1146e64f7f4b1b352acddc6e926c14e
 Code of Conduct. By contributing to this project you agree to abide by its terms.

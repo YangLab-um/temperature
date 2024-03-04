@@ -1,0 +1,36 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    # Set up operating system
+    runs-on: ubuntu-latest
+
+    # Define job steps
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5.0.0
+        with:
+          # Version range or exact version of Python or PyPy to use, using SemVer's version range syntax. Reads from .python-version if unset.
+          python-version: "3.9"
+
+      - name: Check-out repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Install poetry
+        uses: knowsuchagency/poetry-install@v2
+
+      - name: Install package
+        run: poetry install
+
+      - name: Test with pytest
+        run: poetry run pytest tests/ --cov=droplet_temperature_analysis --cov-report=xml
+
+      - name: Use Codecov to track coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml # coverage report
+
+      - name: Build documentation
+        run: poetry run make html --directory docs/
