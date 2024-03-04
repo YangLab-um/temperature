@@ -9,16 +9,17 @@ jobs:
 
     # Define job steps
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5.0.0
         with:
+          # Version range or exact version of Python or PyPy to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.9"
 
       - name: Check-out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.1
 
       - name: Install poetry
-        uses: snok/install-poetry@v1
+        uses: knowsuchagency/poetry-install@v2
 
       - name: Install package
         run: poetry install
