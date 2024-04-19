@@ -22,28 +22,28 @@ output_order = {'peak': 0, 'trough': 1}
 
 # Initial dataset
 all_tracks = pd.DataFrame({
-    "frame": [np.NaN],
-    "value": [np.NaN],
-    "id": [np.NaN],
+    "TIME": [np.NaN],
+    "RATIO": [np.NaN],
+    "TRACK_ID": [np.NaN],
 })
 all_peaks = pd.DataFrame({
-    "frame": [np.NaN],
-    "value": [np.NaN],
-    "cycle": [np.NaN],
-    "id": [np.NaN],
+    "TIME": [np.NaN],
+    "RATIO": [np.NaN],
+    "CYCLE": [np.NaN],
+    "TRACK_ID": [np.NaN],
 })
 all_troughs = pd.DataFrame({
-    "frame": [np.NaN],
-    "value": [np.NaN],
-    "cycle": [np.NaN],
-    "id": [np.NaN],
+    "TIME": [np.NaN],
+    "RATIO": [np.NaN],
+    "CYCLE": [np.NaN],
+    "TRACK_ID": [np.NaN],
 })
 
-min_id = min(all_tracks['id'])
-id_list = all_tracks['id'].unique()
+min_id = min(all_tracks['TRACK_ID'])
+id_list = all_tracks['TRACK_ID'].unique()
 
 def get_current_data(df, id):
-    return df[df['id'] == id]
+    return df[df['TRACK_ID'] == id]
 
 def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs):
     # Filter data
@@ -51,24 +51,24 @@ def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs):
     peaks = get_current_data(df_peaks, id)
     troughs = get_current_data(df_troughs, id)
     # Sort data
-    tracks = tracks.sort_values('frame')
+    tracks = tracks.sort_values('TIME')
     # Track
-    fig = px.scatter(tracks, x="frame", y="value")
+    fig = px.scatter(tracks, x="TIME", y="RATIO")
     fig.update_traces(mode='lines+markers')
     fig.update_layout(clickmode='event')
     fig.update_traces(marker_size=app_style['track-marker-size'])
     # Peaks
-    fig.add_trace(px.scatter(peaks, x="frame", y="value").data[0])
+    fig.add_trace(px.scatter(peaks, x="TIME", y="RATIO").data[0])
     fig.data[1].marker.color = app_style['peak-marker-color']
     fig.data[1].marker.size = app_style['peak-trough-marker-size']
     fig.data[1].marker.symbol = app_style['peak-marker-symbol']
     # Troughs
-    fig.add_trace(px.scatter(troughs, x="frame", y="value").data[0])
+    fig.add_trace(px.scatter(troughs, x="TIME", y="RATIO").data[0])
     fig.data[2].marker.color = app_style['trough-marker-color']
     fig.data[2].marker.size = app_style['peak-trough-marker-size']
     fig.data[2].marker.symbol = app_style['trough-marker-symbol']
     # Labels
-    fig.update_xaxes(title_text='Frame', tickfont_size=14)
+    fig.update_xaxes(title_text='Time (min)', tickfont_size=14)
     fig.update_yaxes(title_text='FRET/CFP Ratio (a.u.)', tickfont_size=14)
     # Margins
     fig.update_layout(margin=dict(l=10, r=10, t=20, b=20))
@@ -219,29 +219,17 @@ def upload_data(contents, filename, last_modified):
     _, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a Trackmate CSV file
-            path = io.StringIO(decoded.decode('cp1252'))
-            all_tracks = pd.read_csv(path, encoding='cp1252', sep=',', header=0, skiprows=range(1, 4),
-                                     usecols=['TRACK_ID', 'FRAME', 'MEAN_INTENSITY_CH2'])
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            all_tracks = pd.read_excel(io.BytesIO(decoded))
+        path = io.BytesIO(decoded)
+        all_tracks = pd.read_csv(path)
     except Exception as e:
         return html.Div([
             'There was an error processing this file.'
         ]), all_tracks.to_dict('records'), []
-    # Rename columns
-    column_renaming = {
-        'TRACK_ID': 'id',
-        'FRAME': 'frame',
-        'MEAN_INTENSITY_CH2': 'value',
-    }
-    all_tracks = all_tracks.rename(columns=column_renaming)
     # Update track ids
-    id_options = [{'label': i, 'value': i} for i in all_tracks['id'].unique()]
+    id_options = [{'label': i, 'value': i} for i in all_tracks['TRACK_ID'].unique()]
     return message, all_tracks.to_dict('records'), id_options
 
+#TODO: Modify this callback
 @callback(
     Output('download-data', 'data'),
     Input('download-button', 'n_clicks'),
@@ -267,7 +255,7 @@ def download_data(n_clicks, all_peaks, all_troughs):
     State('track-id', 'value'),
     State('all-tracks-table', 'data'))
 def update_track_id(prev_clicks, next_clicks, id_options, current_id, all_tracks):
-    all_ids = pd.DataFrame(all_tracks)['id'].unique()
+    all_ids = pd.DataFrame(all_tracks)['TRACK_ID'].unique()
     if ctx.triggered[0]['prop_id'] == 'previous-track-button.n_clicks':
         if current_id == min(all_ids):
             new_id = current_id
@@ -300,16 +288,16 @@ def update_all_peaks_and_troughs(all_tracks, current_peaks, current_troughs, cur
         # Automatically calculate peaks and troughs
         # TODO
         all_peaks = pd.DataFrame({
-            "frame": [1, 2, 3, 5, 6, 7],
-            "value": [1, -1, 1, 1, -1, 1],
-            "cycle": [0, 1, 2, 0, 1, 2],
-            "id": [0, 0, 0, 3, 3, 5],
+            "TIME": [1, 2, 3, 5, 6, 7],
+            "RATIO": [1, -1, 1, 1, -1, 1],
+            "CYCLE": [0, 1, 2, 0, 1, 2],
+            "TRACK_ID": [0, 0, 0, 3, 3, 5],
         })
         all_troughs = pd.DataFrame({
-            "frame": [6, 7, 8],
-            "value": [1, -1, 1],
-            "cycle": [0, 1, 2],
-            "id": [0, 3, 5]
+            "TIME": [6, 7, 8],
+            "RATIO": [1, -1, 1],
+            "CYCLE": [0, 1, 2],
+            "TRACK_ID": [0, 3, 5]
         })
         return all_peaks.to_dict('records'), all_troughs.to_dict('records')
     # Same tracks, update peaks and troughs
@@ -319,20 +307,20 @@ def update_all_peaks_and_troughs(all_tracks, current_peaks, current_troughs, cur
     all_troughs = pd.DataFrame(all_troughs)
     if current_peaks.empty:
         current_peaks = pd.DataFrame({
-            "frame": [np.nan],
-            "value": [np.nan],
-            "cycle": [np.nan],
-            "id": current_id,
+            "TIME": [np.nan],
+            "RATIO": [np.nan],
+            "CYCLE": [np.nan],
+            "TRACK_ID": current_id,
         })
     if current_troughs.empty:
         current_troughs = pd.DataFrame({
-            "frame": [np.nan],
-            "value": [np.nan],
-            "cycle": [np.nan],
-            "id": current_id,
+            "TIME": [np.nan],
+            "RATIO": [np.nan],
+            "CYCLE": [np.nan],
+            "TRACK_ID": current_id,
         })
-    all_peaks = pd.concat([all_peaks[all_peaks['id'] != current_id], current_peaks], ignore_index=True)
-    all_troughs = pd.concat([all_troughs[all_troughs['id'] != current_id], current_troughs], ignore_index=True)
+    all_peaks = pd.concat([all_peaks[all_peaks['TRACK_ID'] != current_id], current_peaks], ignore_index=True)
+    all_troughs = pd.concat([all_troughs[all_troughs['TRACK_ID'] != current_id], current_troughs], ignore_index=True)
     return all_peaks.to_dict('records'), all_troughs.to_dict('records')
 
 @callback(
@@ -358,10 +346,10 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
         return output
     elif ctx.triggered[0]['prop_id'] == 'cycle-number-button.n_clicks':
         # Assign cycle numbers
-        current_peak_data = pd.DataFrame(current_peak_data).sort_values('frame').reset_index(drop=True)
-        current_trough_data = pd.DataFrame(current_trough_data).sort_values('frame').reset_index(drop=True)
-        current_peak_data['cycle'] = np.arange(len(current_peak_data)) % len(current_peak_data)
-        current_trough_data['cycle'] = np.arange(len(current_trough_data)) % len(current_trough_data)
+        current_peak_data = pd.DataFrame(current_peak_data).sort_values('TIME').reset_index(drop=True)
+        current_trough_data = pd.DataFrame(current_trough_data).sort_values('TIME').reset_index(drop=True)
+        current_peak_data['CYCLE'] = np.arange(len(current_peak_data)) % len(current_peak_data)
+        current_trough_data['CYCLE'] = np.arange(len(current_trough_data)) % len(current_trough_data)
         output = [current_peak_data.to_dict('records'), current_trough_data.to_dict('records')]
         return output
 
@@ -377,10 +365,10 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
         if old_data.empty:
             if add_or_remove == 'add':
                 new_data = pd.DataFrame({
-                    "frame": [click_data['points'][0]['x']],
-                    "value": [click_data['points'][0]['y']],
-                    "cycle": np.NaN,
-                    "id": current_id,
+                    "TIME": [click_data['points'][0]['x']],
+                    "RATIO": [click_data['points'][0]['y']],
+                    "CYCLE": np.NaN,
+                    "TRACK_ID": current_id,
                 })
                 output[output_order[peak_or_trough]] = new_data.to_dict('records')
                 return output
@@ -399,10 +387,10 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
                     return output
                 else:
                     datapoint = pd.DataFrame({
-                        "frame": [click_data['points'][0]['x']],
-                        "value": [click_data['points'][0]['y']],
-                        "cycle": np.NaN,
-                        "id": current_id,
+                        "TIME": [click_data['points'][0]['x']],
+                        "RATIO": [click_data['points'][0]['y']],
+                        "CYCLE": np.NaN,
+                        "TRACK_ID": current_id,
                     })
                     new_data = pd.concat([old_data, datapoint], ignore_index=True)
                     output[output_order[peak_or_trough]] = new_data.to_dict('records')
@@ -420,17 +408,17 @@ def update_plot(current_id, current_peaks, current_troughs, all_tracks):
     current_troughs = pd.DataFrame(current_troughs)
     if current_peaks.empty:
         current_peaks = pd.DataFrame({
-            "frame": [np.nan],
-            "value": [np.nan],
-            "cycle": [np.nan],
-            "id": current_id,
+            "TIME": [np.nan],
+            "RATIO": [np.nan],
+            "CYCLE": [np.nan],
+            "TRACK_ID": current_id,
         })
     if current_troughs.empty:
         current_troughs = pd.DataFrame({
-            "frame": [np.nan],
-            "value": [np.nan],
-            "cycle": [np.nan],
-            "id": current_id,
+            "TIME": [np.nan],
+            "RATIO": [np.nan],
+            "CYCLE": [np.nan],
+            "TRACK_ID": current_id,
         })
     fig = plot_track_with_peaks_and_troughs(current_id, current_track, current_peaks, current_troughs)
     return fig
