@@ -157,6 +157,9 @@ app.layout = dbc.Container([
             ),
         ], width=2, style={'padding-top': '10px'}),
         dbc.Col([
+            html.H4("Time range: "),
+        ], width=2, style={'padding': '10px'}),
+        dbc.Col([
             dcc.Input(id='min-time', type='number', value=0),
         ], width=2, style={'padding': '10px'}),
         dbc.Col([
