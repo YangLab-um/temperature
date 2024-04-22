@@ -478,8 +478,8 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
             current_trough_data = pd.DataFrame(current_trough_data).sort_values('TIME').reset_index(drop=True)
         except:
             current_trough_data = pd.DataFrame({})
-        current_peak_data['CYCLE'] = np.arange(len(current_peak_data)) % len(current_peak_data) 
-        current_trough_data['CYCLE'] = np.arange(len(current_trough_data)) % len(current_trough_data)
+        current_peak_data['CYCLE'] = np.arange(len(current_peak_data)) % len(current_peak_data) + 1
+        current_trough_data['CYCLE'] = np.arange(len(current_trough_data)) % len(current_trough_data) + 1
         output = [current_peak_data.to_dict('records'), current_trough_data.to_dict('records')]
         return output
 
