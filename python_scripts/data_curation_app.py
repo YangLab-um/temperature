@@ -45,7 +45,7 @@ id_list = all_tracks['TRACK_ID'].unique()
 def get_current_data(df, id):
     return df[df['TRACK_ID'] == id]
 
-def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs):
+def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs, min_time, max_time):
     # Filter data
     tracks = get_current_data(df_tracks, id)
     peaks = get_current_data(df_peaks, id)
@@ -72,6 +72,8 @@ def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs):
     fig.update_yaxes(title_text='FRET/CFP Ratio (a.u.)', tickfont_size=14)
     # Margins
     fig.update_layout(margin=dict(l=10, r=10, t=20, b=20))
+    if min_time < max_time:
+        fig.update_xaxes(range=[float(min_time), float(max_time)])
     return fig
 
 # Upload peaks and troughs
@@ -141,7 +143,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dcc.Graph(
             id='track-plot',
-            figure=plot_track_with_peaks_and_troughs(min_id, all_tracks, all_peaks, all_troughs)
+            figure=plot_track_with_peaks_and_troughs(min_id, all_tracks, all_peaks, all_troughs, 0, 1)
         ),
     ], className="g-0"),
     dbc.Row([
@@ -154,6 +156,12 @@ app.layout = dbc.Container([
                 options=[],
             ),
         ], width=2, style={'padding-top': '10px'}),
+        dbc.Col([
+            dcc.Input(id='min-time', type='number', value=0),
+        ], width=2, style={'padding': '10px'}),
+        dbc.Col([
+            dcc.Input(id='max-time', type='number', value=1),
+        ], width=2, style={'padding': '10px'}),
     ]),
     dbc.Row([
         dbc.Col([
@@ -429,8 +437,10 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
     Input('track-id', 'value'),
     Input('current-peaks-table', 'data'),
     Input('current-troughs-table', 'data'),
+    Input('min-time', 'value'),
+    Input('max-time', 'value'),
     State('all-tracks-table', 'data'))
-def update_plot(current_id, current_peaks, current_troughs, all_tracks):
+def update_plot(current_id, current_peaks, current_troughs, min_time, max_time, all_tracks):
     current_track = get_current_data(pd.DataFrame(all_tracks), current_id)
     current_peaks = pd.DataFrame(current_peaks)
     current_troughs = pd.DataFrame(current_troughs)
@@ -448,7 +458,8 @@ def update_plot(current_id, current_peaks, current_troughs, all_tracks):
             "CYCLE": [np.nan],
             "TRACK_ID": current_id,
         })
-    fig = plot_track_with_peaks_and_troughs(current_id, current_track, current_peaks, current_troughs)
+    fig = plot_track_with_peaks_and_troughs(current_id, current_track, current_peaks, current_troughs,
+                                            min_time, max_time)
     return fig
 
 if __name__ == '__main__':
