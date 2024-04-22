@@ -25,6 +25,8 @@ all_tracks = pd.DataFrame({
     "TIME": [np.NaN],
     "RATIO": [np.NaN],
     "TRACK_ID": [np.NaN],
+    "POSITION_X": [np.NaN],
+    "RADIUS": [np.NaN],
 })
 all_peaks = pd.DataFrame({
     "TIME": [np.NaN],
@@ -70,6 +72,42 @@ def plot_track_with_peaks_and_troughs(id, df_tracks, df_peaks, df_troughs, min_t
     # Labels
     fig.update_xaxes(title_text='Time (min)', tickfont_size=14)
     fig.update_yaxes(title_text='FRET/CFP Ratio (a.u.)', tickfont_size=14)
+    # Margins
+    fig.update_layout(margin=dict(l=10, r=10, t=20, b=20))
+    if min_time < max_time:
+        fig.update_xaxes(range=[float(min_time), float(max_time)])
+    return fig
+
+def plot_x_position_vs_time(id, df_tracks, min_time, max_time):
+    # Filter data
+    tracks = get_current_data(df_tracks, id)
+    # Sort data
+    tracks = tracks.sort_values('TIME')
+    # X-Position
+    fig = px.scatter(tracks, x="TIME", y="POSITION_X", color_discrete_sequence=['purple'])
+    fig.update_traces(mode='lines+markers')
+    fig.update_traces(marker_size=app_style['track-marker-size'])
+    # Labels
+    fig.update_xaxes(title_text='Time (min)', tickfont_size=14)
+    fig.update_yaxes(title_text='X-Position (um)', tickfont_size=14)
+    # Margins
+    fig.update_layout(margin=dict(l=10, r=10, t=20, b=20))
+    if min_time < max_time:
+        fig.update_xaxes(range=[float(min_time), float(max_time)])
+    return fig
+
+def plot_radius_vs_time(id, df_tracks, min_time, max_time):
+    # Filter data
+    tracks = get_current_data(df_tracks, id)
+    # Sort data
+    tracks = tracks.sort_values('TIME')
+    # Radius
+    fig = px.scatter(tracks, x="TIME", y="RADIUS", color_discrete_sequence=['orange'])
+    fig.update_traces(mode='lines+markers')
+    fig.update_traces(marker_size=app_style['track-marker-size'])
+    # Labels
+    fig.update_xaxes(title_text='Time (min)', tickfont_size=14)
+    fig.update_yaxes(title_text='Radius (um)', tickfont_size=14)
     # Margins
     fig.update_layout(margin=dict(l=10, r=10, t=20, b=20))
     if min_time < max_time:
@@ -143,7 +181,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dcc.Graph(
             id='track-plot',
-            figure=plot_track_with_peaks_and_troughs(min_id, all_tracks, all_peaks, all_troughs, 0, 1)
+            figure=plot_track_with_peaks_and_troughs(min_id, all_tracks, all_peaks, all_troughs, 0, 1000)
         ),
     ], className="g-0"),
     dbc.Row([
@@ -163,7 +201,7 @@ app.layout = dbc.Container([
             dcc.Input(id='min-time', type='number', value=0),
         ], width=2, style={'padding': '10px'}),
         dbc.Col([
-            dcc.Input(id='max-time', type='number', value=1),
+            dcc.Input(id='max-time', type='number', value=1000),
         ], width=2, style={'padding': '10px'}),
     ]),
     dbc.Row([
@@ -252,6 +290,24 @@ app.layout = dbc.Container([
                 row_deletable=True,
             )], width=6, style={'padding': '10px'}),
        ], className="g-0"),
+    dbc.Row([
+        # X-Position vs Time
+        dbc.Col([
+            dcc.Graph(
+                id='x-position-plot',
+                figure=plot_x_position_vs_time(min_id, all_tracks, 0, 1000)
+            ),
+        ], width=12, style={'padding': '10px'}),
+    ], className="g-0"),
+    dbc.Row([
+        # Radius vs Time
+        dbc.Col([
+            dcc.Graph(
+                id='radius-plot',
+                figure=plot_radius_vs_time(min_id, all_tracks, 0, 1000)
+            ),
+        ], width=12, style={'padding': '10px'}),
+    ], className="g-0"),
 ])
 
 @callback(
@@ -437,6 +493,8 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
 
 @callback(
     Output('track-plot', 'figure'),
+    Output('x-position-plot', 'figure'),
+    Output('radius-plot', 'figure'),
     Input('track-id', 'value'),
     Input('current-peaks-table', 'data'),
     Input('current-troughs-table', 'data'),
@@ -461,9 +519,11 @@ def update_plot(current_id, current_peaks, current_troughs, min_time, max_time, 
             "CYCLE": [np.nan],
             "TRACK_ID": current_id,
         })
-    fig = plot_track_with_peaks_and_troughs(current_id, current_track, current_peaks, current_troughs,
-                                            min_time, max_time)
-    return fig
+    track_fig = plot_track_with_peaks_and_troughs(current_id, current_track, current_peaks, current_troughs,
+                                                  min_time, max_time)
+    x_position_fig = plot_x_position_vs_time(current_id, current_track, min_time, max_time)
+    radius_fig = plot_radius_vs_time(current_id, current_track, min_time, max_time)
+    return track_fig, x_position_fig, radius_fig
 
 if __name__ == '__main__':
     app.run(debug=True)
