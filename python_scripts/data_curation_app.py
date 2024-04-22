@@ -240,8 +240,11 @@ app.layout = dbc.Container([
             dbc.Button("Assign cycle numbers", id="cycle-number-button", color="secondary", className="mr-1"),
         ], width=2, style={'padding': '10px'}),
         dbc.Col([
-            dbc.Button("Download", id="download-button", color="success", className="mr-1"),
+            dbc.Button("Download all peaks/troughs", id="download-button", color="success", className="mr-1"),
             dcc.Download(id="download-data"),
+        ], width=3, style={'padding': '10px'}),
+        dbc.Col([
+            dbc.Button("Flag", id="flag-button", color="danger", className="mr-1"),
         ], width=1, style={'padding': '10px'}),
     ], className="g-0"),
     dbc.Row([
@@ -291,7 +294,6 @@ app.layout = dbc.Container([
             )], width=6, style={'padding': '10px'}),
        ], className="g-0"),
     dbc.Row([
-        # X-Position vs Time
         dbc.Col([
             dcc.Graph(
                 id='x-position-plot',
@@ -300,7 +302,6 @@ app.layout = dbc.Container([
         ], width=12, style={'padding': '10px'}),
     ], className="g-0"),
     dbc.Row([
-        # Radius vs Time
         dbc.Col([
             dcc.Graph(
                 id='radius-plot',
@@ -308,6 +309,25 @@ app.layout = dbc.Container([
             ),
         ], width=12, style={'padding': '10px'}),
     ], className="g-0"),
+    dbc.Row([
+        dbc.Col([
+            html.H3("Flagged for removal or correction"),
+        ], width=6, style={'padding-top': '10px'}),
+        dbc.Col([
+            dbc.Button("Download flagged data", id="download-flagged-button", color="success", className="mr-1"),
+            dcc.Download(id="download-flagged-data"),
+        ], style={'padding-top': '10px'}),
+    ], className="g-0"),
+    dbc.Row([
+        dash_table.DataTable(
+            id='flagged-table',
+            columns=[{"name": "TRACK_ID", "id": "TRACK_ID"}],
+            data=pd.DataFrame({}).to_dict('records'),
+            editable=True,
+            sort_action='native',
+            row_deletable=True,
+        ),
+    ], className="g-0", style={'padding': '10px'}),
 ])
 
 @callback(
@@ -351,6 +371,15 @@ def download_data(n_clicks, all_peaks, all_troughs):
     all_troughs.columns = ['TIME', 'RATIO', 'CYCLE', 'TRACK_ID', 'TYPE']
     all_peaks_and_troughs = pd.concat([all_peaks, all_troughs], ignore_index=True)
     return dcc.send_data_frame(all_peaks_and_troughs.to_csv, "peaks_and_troughs.csv", index=False)
+
+@callback(
+    Output('download-flagged-data', 'data'),
+    Input('download-flagged-button', 'n_clicks'),
+    State('flagged-table', 'data'),
+    prevent_initial_call=True)
+def download_flagged_data(n_clicks, flagged_data):
+    flagged_data = pd.DataFrame(flagged_data)
+    return dcc.send_data_frame(flagged_data.to_csv, "flagged_data.csv", index=False)
 
 @callback(
     Output('track-id', 'value'),
@@ -524,6 +553,24 @@ def update_plot(current_id, current_peaks, current_troughs, min_time, max_time, 
     x_position_fig = plot_x_position_vs_time(current_id, current_track, min_time, max_time)
     radius_fig = plot_radius_vs_time(current_id, current_track, min_time, max_time)
     return track_fig, x_position_fig, radius_fig
+
+@callback(
+    Output('flagged-table', 'data'),
+    Input('flag-button', 'n_clicks'),
+    State('track-id', 'value'),
+    State('flagged-table', 'data'),
+    prevent_initial_call=True)
+def flag_track(n_clicks, current_id, flagged_data):
+    # Only add data if it's not already in the table
+    if current_id in [i['TRACK_ID'] for i in flagged_data]:
+        return flagged_data
+    else:
+        flagged_data = pd.DataFrame(flagged_data)
+        new_data = pd.DataFrame({
+            "TRACK_ID": [current_id]
+        })
+        flagged_data = pd.concat([flagged_data, new_data], ignore_index=True)
+        return flagged_data.to_dict('records')
 
 if __name__ == '__main__':
     app.run(debug=True)
