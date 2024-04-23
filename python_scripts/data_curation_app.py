@@ -124,8 +124,16 @@ def upload_peaks_troughs(contents, filename):
     try:
         path = io.BytesIO(decoded)
         all_peaks_and_troughs = pd.read_csv(path)
-        all_peaks = all_peaks_and_troughs[all_peaks_and_troughs['TYPE'] == 'PEAK']
-        all_troughs = all_peaks_and_troughs[all_peaks_and_troughs['TYPE'] == 'TROUGH']
+        all_peaks = all_peaks_and_troughs.loc[all_peaks_and_troughs['TYPE'] == 'PEAK'].copy(deep=True)
+        all_troughs = all_peaks_and_troughs.loc[all_peaks_and_troughs['TYPE'] == 'TROUGH'].copy(deep=True)
+        # Assign cycle numbers automatically for each track, using .loc
+        for track_id in all_peaks['TRACK_ID'].unique():
+            track_peaks = all_peaks.loc[all_peaks['TRACK_ID'] == track_id]
+            track_troughs = all_troughs.loc[all_troughs['TRACK_ID'] == track_id]
+            peaks_cycle_number = np.arange(len(track_peaks)) % len(track_peaks) + 1
+            troughs_cycle_number = np.arange(len(track_troughs)) % len(track_troughs) + 1
+            all_peaks.loc[all_peaks['TRACK_ID'] == track_id, 'CYCLE'] = peaks_cycle_number
+            all_troughs.loc[all_troughs['TRACK_ID'] == track_id, 'CYCLE'] = troughs_cycle_number
     except Exception as e:
         return html.Div([
             'There was an error processing this file.'
@@ -488,9 +496,9 @@ def update_click_data(click_data, current_id, update_cycle_number, current_peak_
         return output
     else:
         if peak_or_trough == 'peak':
-            old_data = pd.DataFrame(current_peak_data, dtype=float)
+            old_data = pd.DataFrame(current_peak_data)
         elif peak_or_trough == 'trough':
-            old_data = pd.DataFrame(current_trough_data, dtype=float)
+            old_data = pd.DataFrame(current_trough_data)
 
         if old_data.empty:
             if add_or_remove == 'add':
