@@ -373,6 +373,14 @@ def download_data(n_clicks, all_peaks, all_troughs):
     all_peaks = pd.DataFrame(all_peaks)
     all_troughs = pd.DataFrame(all_troughs)
     all_peaks_and_troughs = pd.concat([all_peaks, all_troughs], ignore_index=True)
+    if all_peaks_and_troughs.empty:
+        all_peaks_and_troughs = pd.DataFrame({
+            "TRACK_ID": [np.nan],
+            "TIME": [np.nan],
+            "RATIO": [np.nan],
+            "TYPE": [np.nan],
+            "CYCLE": [np.nan],
+        })
     return dcc.send_data_frame(all_peaks_and_troughs.to_csv, "peaks_and_troughs.csv", index=False)
 
 @callback(
