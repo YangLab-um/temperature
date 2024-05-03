@@ -390,6 +390,10 @@ def download_data(n_clicks, all_peaks, all_troughs):
     prevent_initial_call=True)
 def download_flagged_data(n_clicks, flagged_data):
     flagged_data = pd.DataFrame(flagged_data)
+    if flagged_data.empty:
+        flagged_data = pd.DataFrame({
+            "TRACK_ID": [np.nan],
+        })
     return dcc.send_data_frame(flagged_data.to_csv, "flagged_data.csv", index=False)
 
 @callback(
