@@ -6,8 +6,10 @@ from scipy.signal import find_peaks, savgol_filter
 
 min_ratio = 0.3
 max_ratio = 1.6
-total_positions = 22
-date = "10-28-22"
+total_positions = 26
+date = "11-04-22"
+data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
+save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
 
 smoothing_window = 15
 smoothing_order = 2
@@ -22,8 +24,8 @@ def detrend(x: np.array, y: np.array) -> np.array:
 
 for pos in range(total_positions):
     # Read in the data
-    spots = pd.read_csv(f"../{date}/Tracking_Result/Pos{pos}_spots.csv", encoding='cp1252', skiprows=range(1, 4))
-    tracks = pd.read_csv(f"../{date}/Tracking_Result/Pos{pos}_tracks.csv", encoding='cp1252', skiprows=range(1, 4))
+    spots = pd.read_csv(f"{data_location}/Pos{pos}_spots.csv", encoding='cp1252', skiprows=range(1, 4))
+    tracks = pd.read_csv(f"{data_location}/Pos{pos}_tracks.csv", encoding='cp1252', skiprows=range(1, 4))
     bit_to_ratio = lambda x: x * (max_ratio - min_ratio) / 65535 + min_ratio
     spots['MEAN_INTENSITY_CH2'] = spots['MEAN_INTENSITY_CH2'].apply(bit_to_ratio)
     # Storage for the data
@@ -53,5 +55,5 @@ for pos in range(total_positions):
         peaks_and_troughs = pd.concat([peaks_and_troughs, peaks_df], ignore_index=True)
         peaks_and_troughs = pd.concat([peaks_and_troughs, troughs_df], ignore_index=True)
     # Save the data
-    processed_spots.to_csv(f"{date}/Pos{pos}_processed_spots.csv", index=False)
-    peaks_and_troughs.to_csv(f"{date}/Pos{pos}_peaks_and_troughs.csv", index=False)
+    processed_spots.to_csv(f"{save_location}/Pos{pos}_processed_spots.csv", index=False)
+    peaks_and_troughs.to_csv(f"{save_location}/Pos{pos}_peaks_and_troughs.csv", index=False)
