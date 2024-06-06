@@ -5,15 +5,16 @@ from scipy.stats import linregress
 from scipy.signal import find_peaks, savgol_filter
 
 min_ratio = 0.3
-max_ratio = 1.6
-total_positions = 26
-date = "11-04-22"
-data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
-save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
-
+max_ratio = 1.9
 smoothing_window = 15
 smoothing_order = 2
 min_prominence = 0.05
+
+position_list = [i for i in range(13)] + [i + 13 for i in range(13)]
+date = "11-11-22"
+data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
+save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
+
 
 def detrend(x: np.array, y: np.array) -> np.array:
     not_nan_ind = ~np.isnan(y)
@@ -22,7 +23,7 @@ def detrend(x: np.array, y: np.array) -> np.array:
     final_y = detrend_y + np.nanmean(y)
     return final_y
 
-for pos in range(total_positions):
+for pos in position_list:
     # Read in the data
     spots = pd.read_csv(f"{data_location}/Pos{pos}_spots.csv", encoding='cp1252', skiprows=range(1, 4))
     tracks = pd.read_csv(f"{data_location}/Pos{pos}_tracks.csv", encoding='cp1252', skiprows=range(1, 4))
@@ -49,9 +50,11 @@ for pos in range(total_positions):
         processed_spots = pd.concat([processed_spots, track_df], ignore_index=True)
         # Save peaks and troughs
         peaks_df = pd.DataFrame({'TRACK_ID': [id]*len(x_peaks), 'TIME': x[x_peaks],
-                                 'RATIO': y_detrended[x_peaks], 'TYPE': ['PEAK']*len(x_peaks)})
+                                 'RATIO': y_detrended[x_peaks], 'TYPE': ['PEAK']*len(x_peaks),
+                                 'CYCLE': np.arange(1, len(x_peaks)+1)})
         troughs_df = pd.DataFrame({'TRACK_ID': [id]*len(x_troughs), 'TIME': x[x_troughs],
-                                   'RATIO': y_detrended[x_troughs], 'TYPE': ['TROUGH']*len(x_troughs)})
+                                   'RATIO': y_detrended[x_troughs], 'TYPE': ['TROUGH']*len(x_troughs),
+                                   'CYCLE': np.arange(1, len(x_troughs)+1)})
         peaks_and_troughs = pd.concat([peaks_and_troughs, peaks_df], ignore_index=True)
         peaks_and_troughs = pd.concat([peaks_and_troughs, troughs_df], ignore_index=True)
     # Save the data
