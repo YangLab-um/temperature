@@ -4,17 +4,16 @@ import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from scipy.signal import find_peaks, savgol_filter
 
-min_ratio = 0.3
-max_ratio = 1.9
-smoothing_window = 15
+min_ratio = 0.4
+max_ratio = 1.65
+smoothing_window = 9
 smoothing_order = 2
 min_prominence = 0.05
 
-position_list = [i for i in range(13)] + [i + 13 for i in range(13)]
-date = "11-11-22"
+position_list = [i for i in range(14)] + [i + 14 for i in range(14)]
+date = "03-20-24"
 data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
 save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
-
 
 def detrend(x: np.array, y: np.array) -> np.array:
     not_nan_ind = ~np.isnan(y)
