@@ -4,15 +4,17 @@ import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from scipy.signal import find_peaks, savgol_filter
 
-min_ratio = 0.4
-max_ratio = 1.65
+min_ratio = 0.35
+max_ratio = 1.55
 smoothing_window = 9
 smoothing_order = 2
 min_prominence = 0.05
+fret_channel = 'CH1'
 
-position_list = [i for i in range(14)] + [i + 14 for i in range(14)]
-date = "03-20-24"
-data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
+position_list = [i for i in range(28)] # + [i + 26 for i in range(13)]
+date = "08-23-24"
+data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result" # rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
+# save_location = rf"Y:\users\franco_tavella\temperature\raw_data\{date}"
 save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
 
 def detrend(x: np.array, y: np.array) -> np.array:
@@ -23,14 +25,15 @@ def detrend(x: np.array, y: np.array) -> np.array:
     return final_y
 
 for pos in position_list:
+    print(f"Processing position {pos}")
     # Read in the data
     spots = pd.read_csv(f"{data_location}/Pos{pos}_spots.csv", encoding='cp1252', skiprows=range(1, 4))
     tracks = pd.read_csv(f"{data_location}/Pos{pos}_tracks.csv", encoding='cp1252', skiprows=range(1, 4))
     bit_to_ratio = lambda x: x * (max_ratio - min_ratio) / 65535 + min_ratio
-    spots['MEAN_INTENSITY_CH2'] = spots['MEAN_INTENSITY_CH2'].apply(bit_to_ratio)
+    spots[f'MEAN_INTENSITY_{fret_channel}'] = spots[f'MEAN_INTENSITY_{fret_channel}'].apply(bit_to_ratio)
     # Storage for the data
     processed_spots = pd.DataFrame(columns=['TRACK_ID', 'TIME', 'RATIO'])
-    peaks_and_troughs = pd.DataFrame(columns=['TRACK_ID', 'TIME', 'RATIO', 'TYPE'])
+    peaks_and_troughs = pd.DataFrame(columns=['TRACK_ID', 'TIME', 'RATIO', 'TYPE', 'CYCLE'])
     # Iterate over each track, detrend the data, and find peaks and troughs
     all_ids = spots['TRACK_ID'].unique()
     for id in all_ids:
@@ -38,7 +41,7 @@ for pos in position_list:
         # Order by time, reset index
         track = track.sort_values(by='POSITION_T').reset_index(drop=True)
         x = track['POSITION_T']
-        y = track['MEAN_INTENSITY_CH2']
+        y = track[f'MEAN_INTENSITY_{fret_channel}']
         y_detrended = detrend(x, y)
         y_smooth = savgol_filter(y_detrended, smoothing_window, smoothing_order)
         x_peaks, peak_properties = find_peaks(y_smooth, prominence=min_prominence)
