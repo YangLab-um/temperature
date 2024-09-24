@@ -371,7 +371,9 @@ def upload_data(contents, filename, last_modified):
     prevent_initial_call=True)
 def download_data(n_clicks, all_peaks, all_troughs):
     all_peaks = pd.DataFrame(all_peaks)
+    all_peaks['TYPE'] = 'PEAK'
     all_troughs = pd.DataFrame(all_troughs)
+    all_troughs['TYPE'] = 'TROUGH'
     all_peaks_and_troughs = pd.concat([all_peaks, all_troughs], ignore_index=True)
     if all_peaks_and_troughs.empty:
         all_peaks_and_troughs = pd.DataFrame({
