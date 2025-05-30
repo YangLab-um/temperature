@@ -1,21 +1,25 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from scipy.signal import find_peaks, savgol_filter
 
-min_ratio = 0.35
-max_ratio = 1.55
+min_ratio = 0.4
+max_ratio = 1.37
 smoothing_window = 9
-smoothing_order = 2
+smoothing_order = 3
 min_prominence = 0.05
 fret_channel = 'CH1'
 
-position_list = [i for i in range(28)] # + [i + 26 for i in range(13)]
-date = "08-23-24"
+position_list = [i for i in range(42)] # + [i + 26 for i in range(13)]
+date = "09-20-24"
 data_location = rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result" # rf"Z:\Users\Franco\Experiments\{date}\Tracking_Result"
 # save_location = rf"Y:\users\franco_tavella\temperature\raw_data\{date}"
 save_location = rf"E:\Project 6 - Temperature\Experiments\data_analysis\{date}"
+
+if os.path.exists(save_location) is False:
+    os.makedirs(save_location)
 
 def detrend(x: np.array, y: np.array) -> np.array:
     not_nan_ind = ~np.isnan(y)
